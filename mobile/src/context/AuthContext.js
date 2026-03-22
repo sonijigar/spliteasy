@@ -1,6 +1,14 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import * as SecureStore from 'expo-secure-store';
 import * as api from '../services/api';
+
+// In-memory store — works in Expo Go for demo purposes.
+// Swap back to expo-secure-store for production builds.
+const _store = {};
+const SecureStore = {
+  getItemAsync: async (key) => _store[key] ?? null,
+  setItemAsync: async (key, value) => { _store[key] = value; },
+  deleteItemAsync: async (key) => { delete _store[key]; },
+};
 
 const AuthContext = createContext(null);
 
