@@ -1,8 +1,10 @@
 // =============================================================
-// API Service — Update API_URL before running!
+// API Service
 // =============================================================
-// For local development: http://localhost:3000/api
-// After deploying backend: https://your-app.railway.app/api
+// LOCAL DEV (Expo tunnel): set to your machine's local IP, e.g.
+//   http://192.168.1.x:3000/api
+// PRODUCTION: replace with your Railway URL, e.g.
+//   https://spliteasy-production.up.railway.app/api
 // =============================================================
 
 const API_URL = 'http://localhost:3000/api';
