@@ -74,4 +74,5 @@ echo ""
 
 trap "echo ''; echo 'Stopping...'; kill $SERVER_PID 2>/dev/null; exit 0" INT
 
-npx expo start --ios
+# Native build — no Expo Go needed
+npx expo run:ios
