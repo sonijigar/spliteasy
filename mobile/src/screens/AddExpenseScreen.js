@@ -44,7 +44,7 @@ export default function AddExpenseScreen({ navigation }) {
     setError('');
     try {
       await api.createExpense(description.trim(), parseFloat(amount), category, paidBy, splitWith);
-      navigation.goBack();
+      navigation.navigate('Home');
     } catch (e) {
       setError(e.message || 'Failed to add expense');
     } finally {
