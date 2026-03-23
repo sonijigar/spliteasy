@@ -11,22 +11,31 @@ const config = getDefaultConfig(__dirname);
  * validator crashes with "Unknown prop type: undefined" because the TypeScript
  * parser cannot handle certain type constructs used in those specs.
  *
- * We redirect every fabric/* import to a plain-View stub so the validator
- * never runs. Navigation still works because App.js calls enableScreens(false),
- * which makes all react-navigation components render plain React Native Views
- * instead of native screen components.
+ * We redirect every import that resolves into the fabric/ directory to a
+ * plain-View stub so the validator never runs. Navigation still works because
+ * App.js calls enableScreens(false), which makes all react-navigation
+ * components render plain React Native Views instead of native screen
+ * components.
+ *
+ * IMPORTANT: We must resolve the module first and check the *file path*, not
+ * the module name string. react-native-screens uses relative imports internally
+ * (e.g. "../fabric/ScreenNativeComponent"), so the module name never contains
+ * the string "react-native-screens" and a string-match on moduleName alone
+ * would silently miss every one of them.
  */
 const FABRIC_STUB = path.resolve(__dirname, 'src/mocks/fabricComponentStub.js');
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  const resolved = context.resolveRequest(context, moduleName, platform);
   if (
-    moduleName.includes('react-native-screens') &&
-    moduleName.includes('/fabric/')
+    resolved != null &&
+    resolved.type === 'sourceFile' &&
+    resolved.filePath.includes('react-native-screens') &&
+    resolved.filePath.includes(`${path.sep}fabric${path.sep}`)
   ) {
-    return { filePath: FABRIC_STUB, type: 'sourceFile' };
+    return { type: 'sourceFile', filePath: FABRIC_STUB };
   }
-  // Fall through to default resolver for everything else
-  return context.resolveRequest(context, moduleName, platform);
+  return resolved;
 };
 
 module.exports = config;
