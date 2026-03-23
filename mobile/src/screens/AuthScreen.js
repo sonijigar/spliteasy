@@ -30,6 +30,23 @@ export default function AuthScreen() {
     }
   };
 
+  const handleDevLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      // Try login first; if the test account doesn't exist yet, register it.
+      try {
+        await signIn('+15550000001', 'devpass123');
+      } catch {
+        await signUp('Dev User', '+15550000001', 'devpass123');
+      }
+    } catch (e) {
+      setError(e.message || 'Dev login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -74,6 +91,16 @@ export default function AuthScreen() {
             onPress={() => { setIsRegister(!isRegister); setError(''); }}
             style={{ marginTop: 12 }}
           />
+
+          {__DEV__ && (
+            <Button
+              title="⚡ Dev Login"
+              variant="secondary"
+              onPress={handleDevLogin}
+              loading={loading}
+              style={{ marginTop: 24, borderColor: '#f59e0b', opacity: 0.8 }}
+            />
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
