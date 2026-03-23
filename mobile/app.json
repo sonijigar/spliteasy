@@ -20,11 +20,6 @@
     "plugins": [
       "expo-secure-store"
     ],
-    "scheme": "spliteasy",
-    "extra": {
-      "eas": {
-        "projectId": "your-eas-project-id"
-      }
-    }
+    "scheme": "spliteasy"
   }
 }
