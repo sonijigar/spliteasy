@@ -16,7 +16,7 @@
     "react": "19.2.0",
     "react-native": "0.83.2",
     "react-native-safe-area-context": "5.7.0",
-    "react-native-screens": "~4.23.0",
+    "react-native-screens": "4.23.0",
     "react-native-qrcode-svg": "^6.3.2",
     "react-native-svg": "15.15.4",
     "@react-navigation/native": "^7.0.0",

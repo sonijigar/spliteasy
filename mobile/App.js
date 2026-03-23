@@ -1,13 +1,15 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { enableScreens } from 'react-native-screens';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import AuthScreen from './src/screens/AuthScreen';
-import { View, ActivityIndicator, StyleSheet, LogBox } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { colors } from './src/utils/theme';
 
-// Suppress known react-native-screens Fabric warnings (multiple prop names trigger this)
-LogBox.ignoreLogs([/Unknown prop type/]);
+// Disable Fabric native screens — avoids codegen "Unknown prop type" crash
+// when the installed react-native-screens version mismatches the RN/Expo Go runtime.
+enableScreens(false);
 
 function Root() {
   const { user, loading } = useAuth();
