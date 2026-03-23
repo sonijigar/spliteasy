@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
+    "mock": "node mock-server.js",
     "lint": "echo 'No linter configured yet'"
   },
   "dependencies": {

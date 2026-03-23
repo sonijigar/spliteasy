@@ -1,5 +1,5 @@
 #!/bin/bash
-# SplitEasy Demo Starter - run this on your Mac
+# SplitEasy Demo Starter — runs mock server (no MongoDB needed) + Expo iOS
 set -e
 
 echo "🚀 SplitEasy Demo Setup"
@@ -9,51 +9,27 @@ echo "========================"
 echo ""
 echo "Checking dependencies..."
 
-if ! command -v brew &>/dev/null; then
-  echo "❌ Homebrew not found. Install it first:"
-  echo "   /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+if ! command -v node &>/dev/null; then
+  echo "❌ Node.js not found. Install from https://nodejs.org"
   exit 1
 fi
 
-if ! command -v node &>/dev/null; then
-  echo "Installing Node.js..."
-  brew install node
+if ! command -v npx &>/dev/null; then
+  echo "❌ npx not found. Update Node.js from https://nodejs.org"
+  exit 1
 fi
 
-if ! command -v mongod &>/dev/null; then
-  echo "Installing MongoDB..."
-  brew tap mongodb/brew
-  brew install mongodb-community@7.0
-fi
+echo "✅ Node $(node --version) ready"
 
-if ! command -v expo &>/dev/null; then
-  echo "Installing Expo CLI..."
-  npm install -g expo-cli
-fi
-
-echo "✅ All dependencies ready"
-
-# ── 2. Start MongoDB ────────────────────────────────────────────
+# ── 2. Start backend mock server ────────────────────────────────
 echo ""
-echo "Starting MongoDB..."
-if brew services list | grep mongodb-community | grep started &>/dev/null; then
-  echo "✅ MongoDB already running"
-else
-  brew services start mongodb/brew/mongodb-community@7.0
-  sleep 2
-  echo "✅ MongoDB started"
-fi
-
-# ── 3. Start backend server ─────────────────────────────────────
-echo ""
-echo "Starting backend server..."
+echo "Starting backend mock server..."
 cd "$(dirname "$0")/server"
 
 if [ ! -f .env ]; then
   echo "Creating .env..."
   JWT_SECRET=$(openssl rand -hex 32)
   cat > .env <<EOF
-MONGODB_URI=mongodb://localhost:27017/spliteasy
 JWT_SECRET=$JWT_SECRET
 PORT=3000
 NODE_ENV=development
@@ -62,22 +38,22 @@ fi
 
 npm install --silent 2>/dev/null
 
-# Kill any existing server on port 3000
+# Kill any existing process on port 3000
 lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+sleep 1
 
-echo "Starting Express server on port 3000..."
-npm start &
+node mock-server.js &
 SERVER_PID=$!
-sleep 3
+sleep 2
 
-# Verify server is up
 if curl -sf http://localhost:3000/api/health &>/dev/null; then
-  echo "✅ Server running at http://localhost:3000"
+  echo "✅ Mock server running at http://localhost:3000"
 else
-  echo "⚠️  Server may still be starting..."
+  echo "❌ Server failed to start"
+  exit 1
 fi
 
-# ── 4. Start Expo ───────────────────────────────────────────────
+# ── 3. Start Expo for iOS Simulator ─────────────────────────────
 echo ""
 echo "Starting Expo for iOS Simulator..."
 cd "$(dirname "$0")/mobile"
@@ -87,13 +63,12 @@ echo ""
 echo "==========================================="
 echo "✅ SplitEasy is ready!"
 echo "   • API:  http://localhost:3000/api"
-echo "   • The iOS Simulator will open shortly"
-echo "   • Press 'i' in the Expo menu to open simulator"
+echo "   • Mock server (no MongoDB needed)"
+echo "   • Press 'i' to open iOS Simulator"
 echo "   • Press Ctrl+C to stop everything"
 echo "==========================================="
 echo ""
 
-# Trap Ctrl+C to clean up
-trap "echo ''; echo 'Stopping...'; kill $SERVER_PID 2>/dev/null; brew services stop mongodb/brew/mongodb-community@7.0; exit 0" INT
+trap "echo ''; echo 'Stopping...'; kill $SERVER_PID 2>/dev/null; exit 0" INT
 
 npx expo start --ios
