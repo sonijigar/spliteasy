@@ -2,6 +2,9 @@
 # SplitEasy Demo Starter — runs mock server (no MongoDB needed) + Expo iOS
 set -e
 
+# Resolve project root as absolute path once, before any cd
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+
 echo "🚀 SplitEasy Demo Setup"
 echo "========================"
 
@@ -24,7 +27,7 @@ echo "✅ Node $(node --version) ready"
 # ── 2. Start backend mock server ────────────────────────────────
 echo ""
 echo "Starting backend mock server..."
-cd "$(dirname "$0")/server"
+cd "$ROOT/server"
 
 if [ ! -f .env ]; then
   echo "Creating .env..."
@@ -56,7 +59,7 @@ fi
 # ── 3. Start Expo for iOS Simulator ─────────────────────────────
 echo ""
 echo "Starting Expo for iOS Simulator..."
-cd "$(dirname "$0")/mobile"
+cd "$ROOT/mobile"
 npm install --silent 2>/dev/null
 
 echo ""
