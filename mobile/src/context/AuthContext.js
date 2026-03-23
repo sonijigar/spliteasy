@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import * as api from '../services/api';
 
@@ -8,20 +8,29 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const clearSession = useCallback(async () => {
+    await SecureStore.deleteItemAsync('token');
+    api.setToken(null);
+    setUser(null);
+  }, []);
+
   // Check for stored token on app launch
   useEffect(() => {
     const loadUser = async () => {
       try {
         const token = await SecureStore.getItemAsync('token');
         if (token) {
-          api.setToken(token);
-          const { user } = await api.getMe();
-          setUser(user);
+          if (api.isTokenExpired(token)) {
+            await clearSession();
+          } else {
+            api.setToken(token);
+            const { user } = await api.getMe();
+            setUser(user);
+          }
         }
       } catch (error) {
         // Token expired or invalid — clear it
-        await SecureStore.deleteItemAsync('token');
-        api.setToken(null);
+        await clearSession();
       } finally {
         setLoading(false);
       }
@@ -44,13 +53,18 @@ export function AuthProvider({ children }) {
   };
 
   const signOut = async () => {
-    await SecureStore.deleteItemAsync('token');
-    api.setToken(null);
-    setUser(null);
+    await clearSession();
   };
 
+  // Call this whenever an API error is caught to handle token expiry uniformly
+  const handleApiError = useCallback(async (error) => {
+    if (error?.message === 'TOKEN_EXPIRED' || error?.message === 'Invalid or expired token') {
+      await clearSession();
+    }
+  }, [clearSession]);
+
   return (
-    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut, handleApiError }}>
       {children}
     </AuthContext.Provider>
   );

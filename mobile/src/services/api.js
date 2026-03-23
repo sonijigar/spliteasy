@@ -14,7 +14,22 @@ let authToken = null;
 export const setToken = (token) => { authToken = token; };
 export const getToken = () => authToken;
 
+// Decode JWT payload and check if token is expired (client-side only, no verification)
+export const isTokenExpired = (token) => {
+  if (!token) return true;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+};
+
 const request = async (endpoint, options = {}) => {
+  if (authToken && isTokenExpired(authToken)) {
+    throw new Error('TOKEN_EXPIRED');
+  }
+
   const headers = {
     'Content-Type': 'application/json',
     ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
