@@ -3,7 +3,10 @@ import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import AuthScreen from './src/screens/AuthScreen';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, LogBox } from 'react-native';
+
+// Suppress known react-native-screens Fabric warning
+LogBox.ignoreLogs(['Unknown prop type for "type"']);
 import { colors } from './src/utils/theme';
 
 function Root() {
