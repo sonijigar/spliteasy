@@ -5,7 +5,7 @@ import { Button, Input } from '../components/UI';
 import { colors, spacing } from '../utils/theme';
 
 export default function AuthScreen() {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, devLogin } = useAuth();
   const [isRegister, setIsRegister] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -30,22 +30,8 @@ export default function AuthScreen() {
     }
   };
 
-  const handleDevLogin = async () => {
-    setError('');
-    setLoading(true);
-    try {
-      // Try login first; if the test account doesn't exist yet, register it.
-      try {
-        await signIn('+15550000001', 'devpass123');
-      } catch {
-        await signUp('Dev User', '+15550000001', 'devpass123');
-      }
-    } catch (e) {
-      setError(e.message || 'Dev login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Bypasses the network entirely — injects a mock user for UI testing.
+  const handleDevLogin = () => devLogin();
 
   return (
     <KeyboardAvoidingView

@@ -57,8 +57,14 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  // Dev-only: skip network entirely, inject a mock user for UI testing.
+  const devLogin = () => {
+    api.setToken('dev-mock-token');
+    setUser({ _id: 'dev-user-1', name: 'Dev User', phone: '+15550000001' });
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut, devLogin }}>
       {children}
     </AuthContext.Provider>
   );
