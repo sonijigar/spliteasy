@@ -3,6 +3,7 @@ import { Text, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../utils/theme';
 
 import HomeScreen from '../screens/HomeScreen';
@@ -13,12 +14,27 @@ import SettleScreen from '../screens/SettleScreen';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
+const TAB_ICONS = {
+  Home:    { active: 'home',    inactive: 'home-outline' },
+  Friends: { active: 'people',  inactive: 'people-outline' },
+  Settle:  { active: 'cash',    inactive: 'cash-outline' },
+};
+
 function TabIcon({ label, focused }) {
-  const icons = { Home: '🏠', Friends: '👥', Settle: '💸' };
+  const icon = TAB_ICONS[label];
   return (
-    <View style={{ alignItems: 'center' }}>
-      <Text style={{ fontSize: 18 }}>{icons[label] || '📋'}</Text>
-      <Text style={{ fontSize: 10, color: focused ? colors.primary : colors.textMuted, marginTop: 2 }}>{label}</Text>
+    <View style={{ alignItems: 'center', minWidth: 56 }}>
+      <Ionicons
+        name={focused ? icon.active : icon.inactive}
+        size={22}
+        color={focused ? colors.primary : colors.textMuted}
+      />
+      <Text
+        numberOfLines={1}
+        style={{ fontSize: 10, color: focused ? colors.primary : colors.textMuted, marginTop: 2 }}
+      >
+        {label}
+      </Text>
     </View>
   );
 }
@@ -30,9 +46,10 @@ function TabNavigator() {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: '#0a0a14',
-          borderTopColor: colors.border,
+          borderTopColor: 'rgba(255,255,255,0.08)',
           paddingTop: 8,
-          height: 85,
+          paddingBottom: 8,
+          height: 80,
         },
         tabBarShowLabel: false,
       }}
