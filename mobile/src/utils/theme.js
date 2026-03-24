@@ -6,9 +6,9 @@ export const colors = {
   primaryDark: '#d63447',
   green: '#14a76c',
   text: '#e8e8f0',
-  textSecondary: '#888a9e',
-  textMuted: '#555a70',
-  border: 'rgba(255,255,255,0.08)',
+  textSecondary: '#aaacc0',
+  textMuted: '#8b8fa8',
+  border: 'rgba(255,255,255,0.12)',
   white: '#ffffff',
   overlay: 'rgba(0,0,0,0.5)',
 };

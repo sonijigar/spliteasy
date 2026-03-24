@@ -81,7 +81,7 @@ export default function AddExpenseScreen({ navigation }) {
           {CATEGORIES.map(cat => (
             <TouchableOpacity key={cat.key} onPress={() => setCategory(cat.key)}
               style={[styles.chip, category === cat.key && styles.chipActive]}>
-              <Text style={{ fontSize: 14 }}>{cat.emoji} {cat.label}</Text>
+              <Text style={{ fontSize: 14, color: colors.text }}>{cat.emoji} {cat.label}</Text>
             </TouchableOpacity>
           ))}
         </View>

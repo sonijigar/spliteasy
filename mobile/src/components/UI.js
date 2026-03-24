@@ -48,7 +48,7 @@ export function Button({ title, onPress, variant = 'primary', loading, disabled,
       ) : (
         <>
           {icon && <View style={{ marginRight: 6 }}>{icon}</View>}
-          <Text style={[styles.btnText, !isPrimary && { color: colors.textSecondary }]}>{title}</Text>
+          <Text style={[styles.btnText, !isPrimary && { color: colors.text }]}>{title}</Text>
         </>
       )}
     </TouchableOpacity>
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   btnSecondary: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.07)',
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
