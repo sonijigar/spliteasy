@@ -62,7 +62,7 @@ export default function SettleScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scroll}>
       {balances.length === 0 ? (
-        <EmptyState emoji="🎉" title="All settled up!" subtitle="No pending balances. Time to celebrate!" />
+        <EmptyState icon="checkmark-circle-outline" title="All settled up!" subtitle="No pending balances. Time to celebrate!" />
       ) : (
         <>
           {/* You Owe */}
