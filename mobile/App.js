@@ -5,6 +5,8 @@ import AppNavigator from './src/navigation/AppNavigator';
 import AuthScreen from './src/screens/AuthScreen';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { colors } from './src/utils/theme';
+import { useFonts } from 'expo-font';
+import { Ionicons } from '@expo/vector-icons';
 
 function Root() {
   const { user, loading } = useAuth();
@@ -21,6 +23,16 @@ function Root() {
 }
 
 export default function App() {
+  const [fontsLoaded] = useFonts(Ionicons.font);
+
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <AuthProvider>
       <StatusBar style="light" />
