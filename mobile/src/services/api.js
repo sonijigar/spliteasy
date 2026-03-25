@@ -7,7 +7,7 @@
 //   https://spliteasy-production.up.railway.app/api
 // =============================================================
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://192.0.2.2:3000/api';
 
 let authToken = null;
 
