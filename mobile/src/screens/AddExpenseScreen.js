@@ -14,8 +14,10 @@ const CATEGORIES = [
   { key: 'other', emoji: '💰', label: 'Other' },
 ];
 
-export default function AddExpenseScreen({ navigation }) {
+export default function AddExpenseScreen({ navigation, route }) {
   const { user } = useAuth();
+  const groupId = route?.params?.groupId || null;
+  const groupName = route?.params?.groupName || null;
   const [friends, setFriends] = useState([]);
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
@@ -43,7 +45,7 @@ export default function AddExpenseScreen({ navigation }) {
     setLoading(true);
     setError('');
     try {
-      await api.createExpense(description.trim(), parseFloat(amount), category, paidBy, splitWith);
+      await api.createExpense(description.trim(), parseFloat(amount), category, paidBy, splitWith, groupId);
       navigation.goBack();
     } catch (e) {
       setError(e.message || 'Failed to add expense');
@@ -57,6 +59,13 @@ export default function AddExpenseScreen({ navigation }) {
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        {/* Group Badge (when opened from a group) */}
+        {groupName ? (
+          <View style={styles.groupBadge}>
+            <Text style={styles.groupBadgeText}>🏕️ Adding to: {groupName}</Text>
+          </View>
+        ) : null}
+
         {/* Big Amount Input */}
         <View style={styles.amountSection}>
           <Text style={styles.amountLabel}>Amount</Text>
@@ -146,4 +155,15 @@ const styles = StyleSheet.create({
   splitName: { fontSize: 14, color: colors.text },
   splitAmount: { fontSize: 13, color: colors.textSecondary, fontVariant: ['tabular-nums'] },
   error: { color: colors.primary, fontSize: 13, textAlign: 'center', marginTop: 8 },
+  groupBadge: {
+    backgroundColor: 'rgba(232,80,91,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(232,80,91,0.3)',
+    borderRadius: radius.md,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    marginBottom: 8,
+    alignSelf: 'center',
+  },
+  groupBadgeText: { fontSize: 13, color: colors.primary, fontWeight: '600' },
 });

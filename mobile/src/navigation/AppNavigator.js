@@ -10,6 +10,8 @@ import HomeScreen from '../screens/HomeScreen';
 import FriendsScreen from '../screens/FriendsScreen';
 import AddExpenseScreen from '../screens/AddExpenseScreen';
 import SettleScreen from '../screens/SettleScreen';
+import GroupsScreen from '../screens/GroupsScreen';
+import GroupDetailScreen from '../screens/GroupDetailScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -17,6 +19,7 @@ const Stack = createNativeStackNavigator();
 const TAB_ICONS = {
   Home:    { active: 'home',    inactive: 'home-outline' },
   Friends: { active: 'people',  inactive: 'people-outline' },
+  Groups:  { active: 'albums',  inactive: 'albums-outline' },
   Settle:  { active: 'cash',    inactive: 'cash-outline' },
 };
 
@@ -58,6 +61,8 @@ function TabNavigator() {
         options={{ tabBarIcon: ({ focused }) => <TabIcon label="Home" focused={focused} /> }} />
       <Tab.Screen name="Friends" component={FriendsScreen}
         options={{ tabBarIcon: ({ focused }) => <TabIcon label="Friends" focused={focused} /> }} />
+      <Tab.Screen name="Groups" component={GroupsScreen}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon label="Groups" focused={focused} /> }} />
       <Tab.Screen name="Settle" component={SettleScreen}
         options={{ tabBarIcon: ({ focused }) => <TabIcon label="Settle" focused={focused} /> }} />
     </Tab.Navigator>
@@ -78,6 +83,8 @@ export default function AppNavigator() {
         <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false }} />
         <Stack.Screen name="AddExpense" component={AddExpenseScreen}
           options={{ title: 'Add Expense', presentation: 'modal' }} />
+        <Stack.Screen name="GroupDetail" component={GroupDetailScreen}
+          options={({ route }) => ({ title: route.params?.groupName || 'Group' })} />
       </Stack.Navigator>
     </NavigationContainer>
   );

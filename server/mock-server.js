@@ -20,9 +20,19 @@ const PORT = process.env.PORT || 3000;
 let users = [];
 let expenses = [];
 let settlements = [];
+let groups = [];
 let idCounter = 1;
 
 const newId = () => String(idCounter++);
+
+// Reset all state (used by tests to get a clean slate between runs)
+const reset = () => {
+  users = [];
+  expenses = [];
+  settlements = [];
+  groups = [];
+  idCounter = 1;
+};
 
 // ── Helpers ──────────────────────────────────────────────────────
 const findUser = (id) => users.find(u => u._id === id);
@@ -249,12 +259,116 @@ app.post('/api/settlements', auth, (req, res) => {
   });
 });
 
+// ── Groups routes ────────────────────────────────────────────────
+const groupPublic = (g) => {
+  if (!g) return null;
+  return {
+    _id: g._id,
+    name: g.name,
+    description: g.description,
+    members: g.members.map(id => userPublic(findUser(id))).filter(Boolean),
+    createdBy: g.createdBy,
+    createdAt: g.createdAt
+  };
+};
+
+app.post('/api/groups', auth, (req, res) => {
+  const { name, description, memberIds } = req.body;
+  if (!name) return res.status(400).json({ error: 'Group name is required' });
+
+  const memberSet = new Set([req.user._id]);
+  if (Array.isArray(memberIds)) {
+    memberIds.forEach(id => memberSet.add(String(id)));
+  }
+
+  const group = {
+    _id: newId(),
+    name,
+    description: description || '',
+    members: Array.from(memberSet),
+    createdBy: req.user._id,
+    createdAt: new Date().toISOString()
+  };
+  groups.push(group);
+  res.status(201).json({ group: groupPublic(group) });
+});
+
+app.get('/api/groups', auth, (req, res) => {
+  const userId = req.user._id;
+  const result = groups
+    .filter(g => g.members.includes(userId))
+    .map(groupPublic);
+  res.json({ groups: result });
+});
+
+app.get('/api/groups/:groupId', auth, (req, res) => {
+  const group = groups.find(g => g._id === req.params.groupId);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  if (!group.members.includes(req.user._id))
+    return res.status(403).json({ error: 'Access denied' });
+
+  const groupExpenses = expenses.filter(e => e.groupId === group._id);
+  const balances = {};
+  groupExpenses.forEach(exp => {
+    const payerId = exp.paidBy;
+    exp.splitWith.forEach(split => {
+      const debtorId = split.userId;
+      if (payerId === debtorId) return;
+      const key = [payerId, debtorId].sort().join(':');
+      if (!balances[key]) balances[key] = { from: debtorId, to: payerId, amount: 0 };
+      if (balances[key].to === payerId) balances[key].amount += split.amount;
+      else balances[key].amount -= split.amount;
+    });
+  });
+
+  res.json({
+    group: groupPublic(group),
+    expenses: groupExpenses.map(e => ({
+      ...e,
+      paidBy: userPublic(findUser(e.paidBy)),
+      splitWith: e.splitWith.map(s => ({ user: userPublic(findUser(s.userId)), amount: s.amount }))
+    })),
+    balances: Object.values(balances)
+  });
+});
+
+app.post('/api/groups/:groupId/members', auth, (req, res) => {
+  const group = groups.find(g => g._id === req.params.groupId);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  if (!group.members.includes(req.user._id))
+    return res.status(403).json({ error: 'Access denied' });
+
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ error: 'userId is required' });
+
+  const userIdStr = String(userId);
+  if (!group.members.includes(userIdStr)) {
+    group.members.push(userIdStr);
+  }
+  res.json({ group: groupPublic(group) });
+});
+
+app.delete('/api/groups/:groupId', auth, (req, res) => {
+  const idx = groups.findIndex(g => g._id === req.params.groupId);
+  if (idx === -1) return res.status(404).json({ error: 'Group not found' });
+  const group = groups[idx];
+  if (group.createdBy !== req.user._id)
+    return res.status(403).json({ error: 'Only the creator can delete this group' });
+  groups.splice(idx, 1);
+  res.json({ message: 'Group deleted' });
+});
+
 // ── Health check ─────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', mode: 'mock', timestamp: new Date().toISOString() });
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ SplitEasy mock server running on port ${PORT} (in-memory mode)`);
-  console.log(`   Health: http://localhost:${PORT}/api/health`);
-});
+// Only start listening when run directly (not when imported by tests)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`✅ SplitEasy mock server running on port ${PORT} (in-memory mode)`);
+    console.log(`   Health: http://localhost:${PORT}/api/health`);
+  });
+}
+
+module.exports = { app, reset };

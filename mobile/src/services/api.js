@@ -69,18 +69,33 @@ export const removeFriend = (friendId) =>
   request(`/friends/${friendId}`, { method: 'DELETE' });
 
 // ── Expenses ────────────────────────────────────────────────
-export const getExpenses = () => request('/expenses');
+export const getExpenses = (groupId) =>
+  request(groupId ? `/expenses?groupId=${groupId}` : '/expenses');
 
-export const createExpense = (description, amount, category, paidBy, splitWith) =>
+export const createExpense = (description, amount, category, paidBy, splitWith, groupId) =>
   request('/expenses', {
     method: 'POST',
-    body: JSON.stringify({ description, amount, category, paidBy, splitWith }),
+    body: JSON.stringify({ description, amount, category, paidBy, splitWith, groupId: groupId || undefined }),
   });
 
 export const deleteExpense = (id) =>
   request(`/expenses/${id}`, { method: 'DELETE' });
 
 export const getBalances = () => request('/expenses/balances');
+
+// ── Groups ──────────────────────────────────────────────────
+export const getGroups = () => request('/groups');
+
+export const createGroup = (data) =>
+  request('/groups', { method: 'POST', body: JSON.stringify(data) });
+
+export const getGroup = (groupId) => request(`/groups/${groupId}`);
+
+export const addGroupMember = (groupId, userId) =>
+  request(`/groups/${groupId}/members`, { method: 'POST', body: JSON.stringify({ userId }) });
+
+export const deleteGroup = (groupId) =>
+  request(`/groups/${groupId}`, { method: 'DELETE' });
 
 // ── Settlements ─────────────────────────────────────────────
 export const getSettlements = () => request('/settlements');

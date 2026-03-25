@@ -7,7 +7,12 @@
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
     "mock": "node mock-server.js",
-    "lint": "echo 'No linter configured yet'"
+    "lint": "echo 'No linter configured yet'",
+    "test": "jest --testTimeout=30000 --forceExit"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": ["**/__tests__/**/*.test.js"]
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -19,7 +24,9 @@
     "mongoose": "^8.6.0"
   },
   "devDependencies": {
+    "jest": "^30.3.0",
     "mongodb-memory-server": "^11.0.1",
-    "nodemon": "^3.1.4"
+    "nodemon": "^3.1.4",
+    "supertest": "^7.2.2"
   }
 }

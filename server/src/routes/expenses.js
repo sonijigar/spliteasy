@@ -8,7 +8,7 @@ const router = express.Router();
 // POST /api/expenses — create expense
 router.post('/', auth, async (req, res) => {
   try {
-    const { description, amount, category, paidBy, splitWith } = req.body;
+    const { description, amount, category, paidBy, splitWith, groupId } = req.body;
 
     if (!description || !amount || !splitWith || splitWith.length === 0) {
       return res.status(400).json({ error: 'Description, amount, and splitWith are required' });
@@ -27,6 +27,7 @@ router.post('/', auth, async (req, res) => {
       category: category || 'other',
       paidBy: paidBy || req.user._id,
       splitWith: splits,
+      group: groupId || null,
       createdBy: req.user._id
     });
 
@@ -43,12 +44,18 @@ router.post('/', auth, async (req, res) => {
 // GET /api/expenses — list expenses involving the user
 router.get('/', auth, async (req, res) => {
   try {
-    const expenses = await Expense.find({
-      $or: [
-        { paidBy: req.user._id },
-        { 'splitWith.user': req.user._id }
-      ]
-    })
+    const { groupId } = req.query;
+
+    const query = groupId
+      ? { group: groupId }
+      : {
+          $or: [
+            { paidBy: req.user._id },
+            { 'splitWith.user': req.user._id }
+          ]
+        };
+
+    const expenses = await Expense.find(query)
       .populate('paidBy', 'name')
       .populate('splitWith.user', 'name')
       .sort({ createdAt: -1 })
@@ -82,14 +89,20 @@ router.delete('/:id', auth, async (req, res) => {
 router.get('/balances', auth, async (req, res) => {
   try {
     const userId = req.user._id;
+    const { groupId } = req.query;
 
-    // Get all expenses involving this user
-    const expenses = await Expense.find({
-      $or: [
-        { paidBy: userId },
-        { 'splitWith.user': userId }
-      ]
-    }).populate('paidBy', 'name').populate('splitWith.user', 'name');
+    // Get all expenses involving this user (optionally filtered by group)
+    const expenseQuery = groupId
+      ? { group: groupId }
+      : {
+          $or: [
+            { paidBy: userId },
+            { 'splitWith.user': userId }
+          ]
+        };
+
+    const expenses = await Expense.find(expenseQuery)
+      .populate('paidBy', 'name').populate('splitWith.user', 'name');
 
     // Get all settlements involving this user
     const settlements = await Settlement.find({
