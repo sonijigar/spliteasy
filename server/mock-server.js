@@ -24,6 +24,14 @@ let idCounter = 1;
 
 const newId = () => String(idCounter++);
 
+// Reset all state (used by tests to get a clean slate between runs)
+const reset = () => {
+  users = [];
+  expenses = [];
+  settlements = [];
+  idCounter = 1;
+};
+
 // ── Helpers ──────────────────────────────────────────────────────
 const findUser = (id) => users.find(u => u._id === id);
 
@@ -254,7 +262,12 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', mode: 'mock', timestamp: new Date().toISOString() });
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ SplitEasy mock server running on port ${PORT} (in-memory mode)`);
-  console.log(`   Health: http://localhost:${PORT}/api/health`);
-});
+// Only start listening when run directly (not when imported by tests)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`✅ SplitEasy mock server running on port ${PORT} (in-memory mode)`);
+    console.log(`   Health: http://localhost:${PORT}/api/health`);
+  });
+}
+
+module.exports = { app, reset };
