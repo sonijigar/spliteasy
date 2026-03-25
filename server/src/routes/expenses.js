@@ -1,7 +1,9 @@
 const express = require('express');
 const Expense = require('../models/Expense');
 const Settlement = require('../models/Settlement');
+const User = require('../models/User');
 const auth = require('../middleware/auth');
+const { notifyExpenseCreated } = require('../services/notifications');
 
 const router = express.Router();
 
@@ -33,6 +35,26 @@ router.post('/', auth, async (req, res) => {
     await expense.save();
     await expense.populate('paidBy', 'name');
     await expense.populate('splitWith.user', 'name');
+
+    // Send push notifications to split participants (excluding the payer)
+    try {
+      const paidById = (paidBy || req.user._id).toString();
+      const recipientIds = splits
+        .map(s => s.user.toString())
+        .filter(id => id !== paidById);
+
+      if (recipientIds.length > 0) {
+        const recipients = await User.find({ _id: { $in: recipientIds } }, 'pushToken name');
+        const splitWithForNotify = recipients.map(u => {
+          const split = splits.find(s => s.user.toString() === u._id.toString());
+          return { user: u, amount: split ? split.amount : 0 };
+        });
+        const paidByName = expense.paidBy.name || req.user.name;
+        notifyExpenseCreated(splitWithForNotify, paidByName, description).catch(() => {});
+      }
+    } catch (notifyError) {
+      console.error('Failed to send expense notifications:', notifyError);
+    }
 
     res.status(201).json({ expense });
   } catch (error) {

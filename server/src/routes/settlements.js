@@ -1,6 +1,8 @@
 const express = require('express');
 const Settlement = require('../models/Settlement');
+const User = require('../models/User');
 const auth = require('../middleware/auth');
+const { notifySettlementCreated } = require('../services/notifications');
 
 const router = express.Router();
 
@@ -23,6 +25,17 @@ router.post('/', auth, async (req, res) => {
     await settlement.save();
     await settlement.populate('from', 'name');
     await settlement.populate('to', 'name');
+
+    // Send push notification to recipient
+    try {
+      const recipient = await User.findById(to, 'pushToken');
+      if (recipient && recipient.pushToken) {
+        const fromName = settlement.from.name || req.user.name;
+        notifySettlementCreated(recipient.pushToken, fromName, amount).catch(() => {});
+      }
+    } catch (notifyError) {
+      console.error('Failed to send settlement notification:', notifyError);
+    }
 
     res.status(201).json({ settlement });
   } catch (error) {

@@ -26,6 +26,10 @@ const userSchema = new mongoose.Schema({
   qrCode: {
     type: String,
     unique: true
+  },
+  pushToken: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true

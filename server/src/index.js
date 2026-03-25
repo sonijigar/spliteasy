@@ -8,6 +8,7 @@ const authRoutes = require('./routes/auth');
 const friendRoutes = require('./routes/friends');
 const expenseRoutes = require('./routes/expenses');
 const settlementRoutes = require('./routes/settlements');
+const userRoutes = require('./routes/users');
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/settlements', settlementRoutes);
+app.use('/api/users', userRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

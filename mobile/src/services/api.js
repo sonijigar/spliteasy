@@ -90,3 +90,10 @@ export const createSettlement = (to, amount, note) =>
     method: 'POST',
     body: JSON.stringify({ to, amount, note }),
   });
+
+// ── Push Notifications ───────────────────────────────────────
+export const updatePushToken = (pushToken) =>
+  request('/users/push-token', {
+    method: 'PATCH',
+    body: JSON.stringify({ pushToken }),
+  });
