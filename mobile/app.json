@@ -18,7 +18,12 @@
       "buildNumber": "1"
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      ["expo-font", {
+        "fonts": [
+          "./node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf"
+        ]
+      }]
     ],
     "scheme": "spliteasy"
   }
