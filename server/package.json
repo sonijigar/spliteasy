@@ -7,7 +7,13 @@
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
     "mock": "node mock-server.js",
-    "lint": "echo 'No linter configured yet'"
+    "lint": "echo 'No linter configured yet'",
+    "test": "jest --runInBand --forceExit"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": ["**/__tests__/**/*.test.js"],
+    "testTimeout": 30000
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -16,10 +22,15 @@
     "express": "^4.21.0",
     "express-rate-limit": "^7.4.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.6.0"
+    "mongoose": "^8.6.0",
+    "multer": "^2.1.1",
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "jest": "^30.3.0",
     "mongodb-memory-server": "^11.0.1",
-    "nodemon": "^3.1.4"
+    "nodemon": "^3.1.4",
+    "supertest": "^7.2.2"
   }
 }

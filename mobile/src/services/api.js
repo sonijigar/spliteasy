@@ -82,6 +82,34 @@ export const deleteExpense = (id) =>
 
 export const getBalances = () => request('/expenses/balances');
 
+// ── Receipts ─────────────────────────────────────────────────
+export const scanReceipt = async (imageUri) => {
+  const formData = new FormData();
+  formData.append('receipt', {
+    uri: imageUri,
+    type: 'image/jpeg',
+    name: 'receipt.jpg',
+  });
+
+  const res = await fetch(`${API_URL}/receipts/scan`, {
+    method: 'POST',
+    headers: {
+      // Do NOT set Content-Type here - let fetch set it automatically with
+      // the correct multipart boundary for FormData.
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+    },
+    body: formData,
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to scan receipt');
+  }
+
+  return data;
+};
+
 // ── Settlements ─────────────────────────────────────────────
 export const getSettlements = () => request('/settlements');
 

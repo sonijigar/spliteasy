@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { Avatar, Button, Input, Card } from '../components/UI';
+import ReceiptScanner from '../components/ReceiptScanner';
 import { colors, spacing, radius } from '../utils/theme';
 import * as api from '../services/api';
 
@@ -57,6 +58,14 @@ export default function AddExpenseScreen({ navigation }) {
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        {/* Receipt Scanner */}
+        <ReceiptScanner
+          onScanComplete={(data) => {
+            if (data.description) setDescription(data.description);
+            if (data.amount != null) setAmount(String(data.amount));
+          }}
+        />
+
         {/* Big Amount Input */}
         <View style={styles.amountSection}>
           <Text style={styles.amountLabel}>Amount</Text>

@@ -18,7 +18,14 @@
       "buildNumber": "1"
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow SplitEasy to access your photos to scan receipts.",
+          "cameraPermission": "Allow SplitEasy to access your camera to scan receipts."
+        }
+      ]
     ],
     "scheme": "spliteasy"
   }
