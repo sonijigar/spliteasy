@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { Avatar, Button, Input, Card } from '../components/UI';
 import { colors, spacing, radius } from '../utils/theme';
 import * as api from '../services/api';
 
 const CATEGORIES = [
-  { key: 'food', emoji: '🍕', label: 'Food' },
-  { key: 'transport', emoji: '🚗', label: 'Transport' },
-  { key: 'shopping', emoji: '🛍️', label: 'Shopping' },
-  { key: 'entertainment', emoji: '🎬', label: 'Fun' },
-  { key: 'rent', emoji: '🏠', label: 'Rent' },
-  { key: 'other', emoji: '💰', label: 'Other' },
+  { key: 'food', icon: 'fast-food-outline', label: 'Food' },
+  { key: 'transport', icon: 'car-outline', label: 'Transport' },
+  { key: 'shopping', icon: 'bag-outline', label: 'Shopping' },
+  { key: 'entertainment', icon: 'film-outline', label: 'Fun' },
+  { key: 'rent', icon: 'home-outline', label: 'Rent' },
+  { key: 'other', icon: 'ellipsis-horizontal-outline', label: 'Other' },
 ];
 
 export default function AddExpenseScreen({ navigation }) {
@@ -81,7 +82,8 @@ export default function AddExpenseScreen({ navigation }) {
           {CATEGORIES.map(cat => (
             <TouchableOpacity key={cat.key} onPress={() => setCategory(cat.key)}
               style={[styles.chip, category === cat.key && styles.chipActive]}>
-              <Text style={{ fontSize: 14, color: colors.text }}>{cat.emoji} {cat.label}</Text>
+              <Ionicons name={cat.icon} size={14} color={category === cat.key ? colors.primary : colors.textSecondary} style={{ marginRight: 6 }} />
+              <Text style={{ fontSize: 14, color: category === cat.key ? colors.primary : colors.text }}>{cat.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -137,6 +139,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 13, color: colors.textSecondary, marginBottom: 8, marginTop: 16 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
   chip: {
+    flexDirection: 'row', alignItems: 'center',
     paddingVertical: 8, paddingHorizontal: 14, borderRadius: radius.md,
     backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: colors.border,
   },

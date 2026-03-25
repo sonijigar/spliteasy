@@ -1,10 +1,21 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { Avatar, Card, Button, EmptyState } from '../components/UI';
 import { colors, spacing, radius } from '../utils/theme';
 import * as api from '../services/api';
+
+const CATEGORY_ICONS = {
+  food: 'fast-food-outline',
+  transport: 'car-outline',
+  shopping: 'bag-outline',
+  entertainment: 'film-outline',
+  rent: 'home-outline',
+  utilities: 'flash-outline',
+  other: 'ellipsis-horizontal-outline',
+};
 
 export default function HomeScreen({ navigation }) {
   const { user, signOut } = useAuth();
@@ -110,14 +121,14 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Recent Expenses</Text>
         {expenses.length === 0 ? (
-          <EmptyState emoji="📝" title="No expenses yet" subtitle="Add your first expense to start splitting!" />
+          <EmptyState icon="receipt-outline" title="No expenses yet" subtitle="Add your first expense to start splitting!" />
         ) : (
           expenses.slice(0, 10).map((exp) => {
-            const emojis = { food: '🍕', transport: '🚗', shopping: '🛍️', entertainment: '🎬', rent: '🏠', utilities: '💡', other: '💰' };
+            const iconName = CATEGORY_ICONS[exp.category] || 'ellipsis-horizontal-outline';
             return (
               <Card key={exp._id} onPress={() => handleDelete(exp._id)} style={styles.row}>
                 <View style={styles.expIcon}>
-                  <Text style={{ fontSize: 18 }}>{emojis[exp.category] || '💰'}</Text>
+                  <Ionicons name={iconName} size={20} color={colors.primary} />
                 </View>
                 <View style={{ flex: 1, marginLeft: 12 }}>
                   <Text style={styles.rowName}>{exp.description}</Text>

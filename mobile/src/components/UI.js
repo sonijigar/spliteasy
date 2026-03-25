@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, spacing } from '../utils/theme';
 
 // ── Avatar ──────────────────────────────────────────────────
@@ -71,10 +72,10 @@ export function Input({ label, error, style, ...props }) {
 }
 
 // ── Empty State ─────────────────────────────────────────────
-export function EmptyState({ emoji, title, subtitle }) {
+export function EmptyState({ icon, title, subtitle }) {
   return (
     <View style={styles.empty}>
-      <Text style={{ fontSize: 40, marginBottom: 12 }}>{emoji}</Text>
+      <Ionicons name={icon || 'help-circle-outline'} size={48} color={colors.textMuted} style={{ marginBottom: 12 }} />
       <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: 4 }}>{title}</Text>
       {subtitle && <Text style={{ fontSize: 14, color: colors.textMuted, textAlign: 'center' }}>{subtitle}</Text>}
     </View>
