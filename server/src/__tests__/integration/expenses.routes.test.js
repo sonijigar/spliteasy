@@ -67,6 +67,169 @@ describe('POST /api/expenses', () => {
   });
 });
 
+describe('POST /api/expenses — unequal splits', () => {
+  test('creates expense with equal split (default behavior)', async () => {
+    const { token, user } = await registerUser('Alice', '+1 555 0001');
+    const { user: bob } = await registerUser('Bob', '+1 555 0002');
+    const res = await request(app)
+      .post('/api/expenses')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        description: 'Dinner',
+        amount: 60,
+        paidBy: user._id,
+        splitWith: [user._id, bob._id],
+        splitType: 'equal'
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.expense.splitType).toBe('equal');
+    // Each person owes $30
+    expect(res.body.expense.splitWith).toHaveLength(2);
+    res.body.expense.splitWith.forEach(s => {
+      expect(s.amount).toBe(30);
+    });
+  });
+
+  test('creates expense with percentage split', async () => {
+    const { token, user } = await registerUser('Alice', '+1 555 0001');
+    const { user: bob } = await registerUser('Bob', '+1 555 0002');
+    const res = await request(app)
+      .post('/api/expenses')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        description: 'Hotel',
+        amount: 100,
+        paidBy: user._id,
+        splitWith: [user._id, bob._id],
+        splitType: 'percentage',
+        customSplits: [
+          { userId: user._id, percentage: 70 },
+          { userId: bob._id, percentage: 30 }
+        ]
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.expense.splitType).toBe('percentage');
+    const aliceSplit = res.body.expense.splitWith.find(s => s.user._id === user._id);
+    const bobSplit = res.body.expense.splitWith.find(s => s.user._id === bob._id);
+    expect(aliceSplit.amount).toBe(70);
+    expect(bobSplit.amount).toBe(30);
+  });
+
+  test('creates expense with exact amount split', async () => {
+    const { token, user } = await registerUser('Alice', '+1 555 0001');
+    const { user: bob } = await registerUser('Bob', '+1 555 0002');
+    const res = await request(app)
+      .post('/api/expenses')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        description: 'Groceries',
+        amount: 50,
+        paidBy: user._id,
+        splitWith: [user._id, bob._id],
+        splitType: 'exact',
+        customSplits: [
+          { userId: user._id, amount: 20 },
+          { userId: bob._id, amount: 30 }
+        ]
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.expense.splitType).toBe('exact');
+    const aliceSplit = res.body.expense.splitWith.find(s => s.user._id === user._id);
+    const bobSplit = res.body.expense.splitWith.find(s => s.user._id === bob._id);
+    expect(aliceSplit.amount).toBe(20);
+    expect(bobSplit.amount).toBe(30);
+  });
+
+  test('creates expense with shares split', async () => {
+    const { token, user } = await registerUser('Alice', '+1 555 0001');
+    const { user: bob } = await registerUser('Bob', '+1 555 0002');
+    const res = await request(app)
+      .post('/api/expenses')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        description: 'Rent',
+        amount: 90,
+        paidBy: user._id,
+        splitWith: [user._id, bob._id],
+        splitType: 'shares',
+        customSplits: [
+          { userId: user._id, shares: 2 },
+          { userId: bob._id, shares: 1 }
+        ]
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.expense.splitType).toBe('shares');
+    const aliceSplit = res.body.expense.splitWith.find(s => s.user._id === user._id);
+    const bobSplit = res.body.expense.splitWith.find(s => s.user._id === bob._id);
+    expect(aliceSplit.amount).toBe(60); // 2/3 of 90
+    expect(bobSplit.amount).toBe(30);  // 1/3 of 90
+  });
+
+  test('returns 400 when percentages do not sum to 100', async () => {
+    const { token, user } = await registerUser('Alice', '+1 555 0001');
+    const { user: bob } = await registerUser('Bob', '+1 555 0002');
+    const res = await request(app)
+      .post('/api/expenses')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        description: 'Hotel',
+        amount: 100,
+        paidBy: user._id,
+        splitWith: [user._id, bob._id],
+        splitType: 'percentage',
+        customSplits: [
+          { userId: user._id, percentage: 60 },
+          { userId: bob._id, percentage: 20 }
+        ]
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/sum to 100/i);
+  });
+
+  test('returns 400 when exact amounts do not sum to total', async () => {
+    const { token, user } = await registerUser('Alice', '+1 555 0001');
+    const { user: bob } = await registerUser('Bob', '+1 555 0002');
+    const res = await request(app)
+      .post('/api/expenses')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        description: 'Groceries',
+        amount: 50,
+        paidBy: user._id,
+        splitWith: [user._id, bob._id],
+        splitType: 'exact',
+        customSplits: [
+          { userId: user._id, amount: 10 },
+          { userId: bob._id, amount: 10 }
+        ]
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/sum to the total/i);
+  });
+
+  test('returns 400 when customSplits missing for non-equal split', async () => {
+    const { token, user } = await registerUser('Alice', '+1 555 0001');
+    const res = await request(app)
+      .post('/api/expenses')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        description: 'Dinner',
+        amount: 60,
+        paidBy: user._id,
+        splitWith: [user._id],
+        splitType: 'percentage'
+      });
+
+    expect(res.status).toBe(400);
+  });
+});
+
 describe('GET /api/expenses/balances', () => {
   test('returns empty balances and zero summary when there are no expenses', async () => {
     const { token } = await registerUser('Alice', '+1 555 0001');

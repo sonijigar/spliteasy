@@ -71,10 +71,10 @@ export const removeFriend = (friendId) =>
 // ── Expenses ────────────────────────────────────────────────
 export const getExpenses = () => request('/expenses');
 
-export const createExpense = (description, amount, category, paidBy, splitWith) =>
+export const createExpense = (description, amount, category, paidBy, splitWith, splitType, customSplits) =>
   request('/expenses', {
     method: 'POST',
-    body: JSON.stringify({ description, amount, category, paidBy, splitWith }),
+    body: JSON.stringify({ description, amount, category, paidBy, splitWith, splitType, customSplits }),
   });
 
 export const deleteExpense = (id) =>
