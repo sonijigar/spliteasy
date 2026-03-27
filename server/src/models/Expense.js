@@ -22,6 +22,26 @@ const expenseSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  splitType: {
+    type: String,
+    enum: ['equal', 'percentage', 'exact', 'shares'],
+    default: 'equal'
+  },
+  customSplits: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    amount: {
+      type: Number
+    },
+    percentage: {
+      type: Number
+    },
+    shares: {
+      type: Number
+    }
+  }],
   splitWith: [{
     user: {
       type: mongoose.Schema.Types.ObjectId,

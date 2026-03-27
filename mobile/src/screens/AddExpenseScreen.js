@@ -15,6 +15,13 @@ const CATEGORIES = [
   { key: 'other', icon: 'ellipsis-horizontal-outline', label: 'Other' },
 ];
 
+const SPLIT_TYPES = [
+  { key: 'equal', label: 'Equal' },
+  { key: 'percentage', label: 'Percentage' },
+  { key: 'exact', label: 'Exact' },
+  { key: 'shares', label: 'Shares' },
+];
+
 export default function AddExpenseScreen({ navigation }) {
   const { user } = useAuth();
   const [friends, setFriends] = useState([]);
@@ -23,6 +30,8 @@ export default function AddExpenseScreen({ navigation }) {
   const [category, setCategory] = useState('other');
   const [paidBy, setPaidBy] = useState(user?._id);
   const [splitWith, setSplitWith] = useState([user?._id]);
+  const [splitType, setSplitType] = useState('equal');
+  const [customSplits, setCustomSplits] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -33,7 +42,89 @@ export default function AddExpenseScreen({ navigation }) {
   const allPeople = [{ _id: user?._id, name: user?.name }, ...friends];
 
   const toggleSplit = (id) => {
-    setSplitWith(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    setSplitWith(prev => {
+      if (prev.includes(id)) {
+        const next = prev.filter(x => x !== id);
+        const nextCustom = { ...customSplits };
+        delete nextCustom[id];
+        setCustomSplits(nextCustom);
+        return next;
+      }
+      return [...prev, id];
+    });
+  };
+
+  const updateCustomSplit = (userId, field, value) => {
+    setCustomSplits(prev => ({
+      ...prev,
+      [userId]: { ...prev[userId], [field]: value }
+    }));
+  };
+
+  const getSplitFieldLabel = () => {
+    if (splitType === 'percentage') return '%';
+    if (splitType === 'shares') return 'shares';
+    if (splitType === 'exact') return '$';
+    return '';
+  };
+
+  const getSplitFieldKey = () => {
+    if (splitType === 'percentage') return 'percentage';
+    if (splitType === 'shares') return 'shares';
+    if (splitType === 'exact') return 'amount';
+    return null;
+  };
+
+  const validateCustomSplits = () => {
+    if (splitType === 'equal') return true;
+    const fieldKey = getSplitFieldKey();
+    const totalAmount = parseFloat(amount);
+
+    for (const userId of splitWith) {
+      const val = parseFloat(customSplits[userId]?.[fieldKey] || '0');
+      if (isNaN(val) || val <= 0) return false;
+    }
+
+    if (splitType === 'percentage') {
+      const total = splitWith.reduce((sum, uid) => sum + parseFloat(customSplits[uid]?.percentage || '0'), 0);
+      return Math.abs(total - 100) <= 0.01;
+    }
+    if (splitType === 'exact') {
+      const total = splitWith.reduce((sum, uid) => sum + parseFloat(customSplits[uid]?.amount || '0'), 0);
+      return Math.abs(total - totalAmount) <= 0.01;
+    }
+    if (splitType === 'shares') {
+      const total = splitWith.reduce((sum, uid) => sum + parseFloat(customSplits[uid]?.shares || '0'), 0);
+      return total > 0;
+    }
+    return true;
+  };
+
+  const getCustomSplitsArray = () => {
+    const fieldKey = getSplitFieldKey();
+    return splitWith.map(userId => ({
+      userId,
+      [fieldKey]: parseFloat(customSplits[userId]?.[fieldKey] || '0')
+    }));
+  };
+
+  const getValidationError = () => {
+    if (splitType === 'equal') return null;
+    const fieldKey = getSplitFieldKey();
+    for (const userId of splitWith) {
+      const val = parseFloat(customSplits[userId]?.[fieldKey] || '0');
+      if (isNaN(val) || val <= 0) return 'All participants must have a value greater than zero';
+    }
+    if (splitType === 'percentage') {
+      const total = splitWith.reduce((sum, uid) => sum + parseFloat(customSplits[uid]?.percentage || '0'), 0);
+      if (Math.abs(total - 100) > 0.01) return `Percentages must sum to 100% (currently ${total.toFixed(1)}%)`;
+    }
+    if (splitType === 'exact') {
+      const total = splitWith.reduce((sum, uid) => sum + parseFloat(customSplits[uid]?.amount || '0'), 0);
+      const totalAmount = parseFloat(amount);
+      if (Math.abs(total - totalAmount) > 0.01) return `Exact amounts must sum to $${totalAmount.toFixed(2)} (currently $${total.toFixed(2)})`;
+    }
+    return null;
   };
 
   const handleSubmit = async () => {
@@ -41,10 +132,16 @@ export default function AddExpenseScreen({ navigation }) {
       setError('Please fill in all fields');
       return;
     }
+    const splitError = getValidationError();
+    if (splitError) {
+      setError(splitError);
+      return;
+    }
     setLoading(true);
     setError('');
     try {
-      await api.createExpense(description.trim(), parseFloat(amount), category, paidBy, splitWith);
+      const splitsPayload = splitType !== 'equal' ? getCustomSplitsArray() : undefined;
+      await api.createExpense(description.trim(), parseFloat(amount), category, paidBy, splitWith, splitType, splitsPayload);
       navigation.goBack();
     } catch (e) {
       setError(e.message || 'Failed to add expense');
@@ -101,10 +198,31 @@ export default function AddExpenseScreen({ navigation }) {
           ))}
         </View>
 
+        {/* Split Type */}
+        <Text style={styles.label}>Split Type</Text>
+        <View style={styles.chipRow}>
+          {SPLIT_TYPES.map(st => (
+            <TouchableOpacity key={st.key} onPress={() => setSplitType(st.key)}
+              style={[styles.chip, splitType === st.key && styles.chipActive]}>
+              <Text style={{ fontSize: 14, color: splitType === st.key ? colors.primary : colors.textSecondary }}>
+                {st.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         {/* Split With */}
-        <Text style={styles.label}>Split equally with ({splitWith.length} selected)</Text>
+        <Text style={styles.label}>
+          {splitType === 'equal'
+            ? `Split equally with (${splitWith.length} selected)`
+            : `Split with (${splitWith.length} selected)`}
+        </Text>
         {allPeople.map(p => {
           const selected = splitWith.includes(p._id);
+          const fieldKey = getSplitFieldKey();
+          const fieldLabel = getSplitFieldLabel();
+          const customVal = customSplits[p._id]?.[fieldKey] || '';
+
           return (
             <Card key={p._id} onPress={() => toggleSplit(p._id)}
               style={[styles.splitCard, selected && styles.splitCardActive]}>
@@ -112,7 +230,25 @@ export default function AddExpenseScreen({ navigation }) {
               <Text style={[styles.splitName, { flex: 1, marginLeft: 12 }]}>
                 {p._id === user?._id ? 'You' : p.name}
               </Text>
-              {selected && <Text style={styles.splitAmount}>${splitAmount}</Text>}
+              {selected && splitType === 'equal' && (
+                <Text style={styles.splitAmount}>${splitAmount}</Text>
+              )}
+              {selected && splitType !== 'equal' && (
+                <View style={styles.customSplitRow}>
+                  {splitType === 'exact' && <Text style={styles.splitFieldPrefix}>$</Text>}
+                  <TextInput
+                    testID={`custom-split-${p._id}`}
+                    style={styles.splitInput}
+                    keyboardType="decimal-pad"
+                    placeholder="0"
+                    placeholderTextColor={colors.textMuted}
+                    value={customVal}
+                    onChangeText={(val) => updateCustomSplit(p._id, fieldKey, val)}
+                    onStartShouldSetResponder={() => true}
+                  />
+                  {splitType !== 'exact' && <Text style={styles.splitFieldSuffix}>{fieldLabel}</Text>}
+                </View>
+              )}
               {selected && <Text style={{ color: colors.primary, fontSize: 18, marginLeft: 8 }}>✓</Text>}
             </Card>
           );
@@ -148,5 +284,18 @@ const styles = StyleSheet.create({
   splitCardActive: { borderColor: 'rgba(232,80,91,0.3)', backgroundColor: 'rgba(232,80,91,0.06)' },
   splitName: { fontSize: 14, color: colors.text },
   splitAmount: { fontSize: 13, color: colors.textSecondary, fontVariant: ['tabular-nums'] },
+  customSplitRow: { flexDirection: 'row', alignItems: 'center' },
+  splitInput: {
+    fontSize: 14,
+    color: colors.text,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    minWidth: 50,
+    textAlign: 'right',
+    paddingVertical: 2,
+    fontVariant: ['tabular-nums'],
+  },
+  splitFieldPrefix: { fontSize: 13, color: colors.textSecondary, marginRight: 2 },
+  splitFieldSuffix: { fontSize: 13, color: colors.textSecondary, marginLeft: 4 },
   error: { color: colors.primary, fontSize: 13, textAlign: 'center', marginTop: 8 },
 });

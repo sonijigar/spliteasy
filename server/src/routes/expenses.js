@@ -8,27 +8,78 @@ const router = express.Router();
 // POST /api/expenses — create expense
 router.post('/', auth, async (req, res) => {
   try {
-    const { description, amount, category, paidBy, splitWith } = req.body;
+    const { description, amount, category, paidBy, splitWith, splitType, customSplits } = req.body;
 
     if (!description || !amount || !splitWith || splitWith.length === 0) {
       return res.status(400).json({ error: 'Description, amount, and splitWith are required' });
     }
 
-    // Equal split
-    const splitAmount = amount / splitWith.length;
-    const splits = splitWith.map(userId => ({
-      user: userId,
-      amount: Math.round(splitAmount * 100) / 100
-    }));
+    const resolvedSplitType = splitType || 'equal';
 
-    const expense = new Expense({
+    let splits;
+
+    if (resolvedSplitType === 'equal') {
+      // Equal split
+      const splitAmount = amount / splitWith.length;
+      splits = splitWith.map(userId => ({
+        user: userId,
+        amount: Math.round(splitAmount * 100) / 100
+      }));
+    } else if (resolvedSplitType === 'percentage') {
+      if (!customSplits || customSplits.length === 0) {
+        return res.status(400).json({ error: 'customSplits are required for percentage split' });
+      }
+      const totalPercentage = customSplits.reduce((sum, s) => sum + (s.percentage || 0), 0);
+      if (Math.abs(totalPercentage - 100) > 0.01) {
+        return res.status(400).json({ error: 'Percentages must sum to 100' });
+      }
+      splits = customSplits.map(s => ({
+        user: s.userId,
+        amount: Math.round((amount * s.percentage / 100) * 100) / 100
+      }));
+    } else if (resolvedSplitType === 'exact') {
+      if (!customSplits || customSplits.length === 0) {
+        return res.status(400).json({ error: 'customSplits are required for exact split' });
+      }
+      const totalExact = customSplits.reduce((sum, s) => sum + (s.amount || 0), 0);
+      if (Math.abs(totalExact - amount) > 0.01) {
+        return res.status(400).json({ error: 'Exact amounts must sum to the total expense amount' });
+      }
+      splits = customSplits.map(s => ({
+        user: s.userId,
+        amount: Math.round(s.amount * 100) / 100
+      }));
+    } else if (resolvedSplitType === 'shares') {
+      if (!customSplits || customSplits.length === 0) {
+        return res.status(400).json({ error: 'customSplits are required for shares split' });
+      }
+      const totalShares = customSplits.reduce((sum, s) => sum + (s.shares || 0), 0);
+      if (totalShares <= 0) {
+        return res.status(400).json({ error: 'Total shares must be greater than zero' });
+      }
+      splits = customSplits.map(s => ({
+        user: s.userId,
+        amount: Math.round((amount * s.shares / totalShares) * 100) / 100
+      }));
+    } else {
+      return res.status(400).json({ error: 'Invalid splitType' });
+    }
+
+    const expenseData = {
       description,
       amount,
       category: category || 'other',
       paidBy: paidBy || req.user._id,
       splitWith: splits,
+      splitType: resolvedSplitType,
       createdBy: req.user._id
-    });
+    };
+
+    if (resolvedSplitType !== 'equal' && customSplits) {
+      expenseData.customSplits = customSplits;
+    }
+
+    const expense = new Expense(expenseData);
 
     await expense.save();
     await expense.populate('paidBy', 'name');
